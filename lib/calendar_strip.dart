@@ -25,6 +25,7 @@ class CalendarStrip extends StatefulWidget {
   final List<String> monthNames;
   final List<String> dayLabels;
   final EdgeInsets calendarMargin;
+  final EdgeInsets dateTileMargin;
 
   CalendarStrip({
     this.addSwipeGesture = false,
@@ -46,6 +47,7 @@ class CalendarStrip extends StatefulWidget {
     this.monthNames,
     this.dayLabels,
     this.calendarMargin,
+    this.dateTileMargin,
   });
 
   State<CalendarStrip> createState() =>
@@ -387,12 +389,15 @@ class CalendarStripState extends State<CalendarStrip>
           delay: 30 + (30 * rowIndex),
           id: "${date.day}${date.month}${date.year}",
           curve: Curves.ease,
-          child: InkWell(
-            customBorder: CircleBorder(),
-            onTap: () => onDateTap(date),
-            child: Container(
-              child: widget.dateTileBuilder(date, selectedDate, rowIndex,
-                  dayName, isDateMarked(date), isDateOutOfRange),
+          child: Container(
+            margin: widget.dateTileMargin ?? EdgeInsets.zero,
+            child: InkWell(
+              customBorder: CircleBorder(),
+              onTap: () => onDateTap(date),
+              child: Container(
+                child: widget.dateTileBuilder(date, selectedDate, rowIndex,
+                    dayName, isDateMarked(date), isDateOutOfRange),
+              ),
             ),
           ),
         ),
