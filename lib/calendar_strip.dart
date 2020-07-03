@@ -20,6 +20,8 @@ class CalendarStrip extends StatefulWidget {
   final bool weekStartsOnSunday;
   final Icon rightIcon;
   final Icon leftIcon;
+  final List<String> monthNames;
+  final List<String> dayLabels;
 
   CalendarStrip({
     this.addSwipeGesture = false,
@@ -36,6 +38,8 @@ class CalendarStrip extends StatefulWidget {
     this.markedDates,
     this.rightIcon,
     this.leftIcon,
+    this.monthNames,
+    this.dayLabels,
   });
 
   State<CalendarStrip> createState() =>
@@ -59,7 +63,12 @@ class CalendarStripState extends State<CalendarStrip>
   bool doesDateRangeExists = false;
   DateTime today;
 
-  List<String> monthLabels = [
+  List<String> monthLabels;
+  List<String> dayLabels;
+
+  static const _dayLabels = ["Mon", "Tue", "Wed", "Thr", "Fri", "Sat", "Sun"];
+
+  static const List<String> _monthLabels = [
     "January",
     "February",
     "March",
@@ -73,8 +82,6 @@ class CalendarStripState extends State<CalendarStrip>
     "November",
     "December"
   ];
-
-  List<String> dayLabels = ["Mon", "Tue", "Wed", "Thr", "Fri", "Sat", "Sun"];
 
   CalendarStripState(
       DateTime selectedDate, DateTime startDate, DateTime endDate) {
@@ -128,6 +135,8 @@ class CalendarStripState extends State<CalendarStrip>
   @override
   void initState() {
     super.initState();
+    monthLabels = widget.monthNames ?? _monthLabels;
+    dayLabels = widget.dayLabels ?? _dayLabels;
     int subtractDuration = widget.weekStartsOnSunday == true
         ? currentDate.weekday
         : currentDate.weekday - 1;
