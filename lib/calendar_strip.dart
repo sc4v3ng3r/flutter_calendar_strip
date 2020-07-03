@@ -18,10 +18,13 @@ class CalendarStrip extends StatefulWidget {
   final List<DateTime> markedDates;
   final bool addSwipeGesture;
   final bool weekStartsOnSunday;
-  final Icon rightIcon;
-  final Icon leftIcon;
+  final Widget rightIconWidget;
+  final bool displayRightIcon;
+  final Widget leftIconWidget;
+  final bool displayLeftIcon;
   final List<String> monthNames;
   final List<String> dayLabels;
+  final EdgeInsets calendarMargin;
 
   CalendarStrip({
     this.addSwipeGesture = false,
@@ -36,10 +39,13 @@ class CalendarStrip extends StatefulWidget {
     this.startDate,
     this.endDate,
     this.markedDates,
-    this.rightIcon,
-    this.leftIcon,
+    this.rightIconWidget,
+    this.leftIconWidget,
+    this.displayLeftIcon,
+    this.displayRightIcon,
     this.monthNames,
     this.dayLabels,
+    this.calendarMargin,
   });
 
   State<CalendarStrip> createState() =>
@@ -281,35 +287,38 @@ class CalendarStripState extends State<CalendarStrip>
         padding: EdgeInsets.only(top: 7, bottom: 3));
   }
 
-  rightIconWidget() {
+  _rightIconWidget() {
+    if (!widget.displayRightIcon) return Container();
+
     if (!isOnEndingWeek) {
-      return InkWell(
-        child: widget.rightIcon ??
-            Icon(
+      return widget.rightIconWidget ??
+          InkWell(
+            child: Icon(
               CupertinoIcons.right_chevron,
               size: 30,
               color: nullOrDefault(widget.iconColor, Colors.black),
             ),
-        onTap: onNextRow,
-        splashColor: Colors.black26,
-      );
+            onTap: onNextRow,
+            splashColor: Colors.black26,
+          );
     } else {
       return Container(width: 20);
     }
   }
 
   leftIconWidget() {
+    if (!widget.displayLeftIcon) return Container();
     if (!isOnStartingWeek) {
-      return InkWell(
-        child: widget.leftIcon ??
-            Icon(
+      return widget.leftIconWidget ??
+          InkWell(
+            child: Icon(
               CupertinoIcons.left_chevron,
               size: 30,
               color: nullOrDefault(widget.iconColor, Colors.black),
             ),
-        onTap: onPrevRow,
-        splashColor: Colors.black26,
-      );
+            onTap: onPrevRow,
+            splashColor: Colors.black26,
+          );
     } else {
       return Container(width: 20);
     }
@@ -357,11 +366,14 @@ class CalendarStripState extends State<CalendarStrip>
           child: GestureDetector(
             onHorizontalDragEnd: (DragEndDetails details) =>
                 onStripDrag(details),
-            child: Row(children: [
-              leftIconWidget(),
-              Expanded(child: Row(children: currentWeekRow)),
-              rightIconWidget()
-            ]),
+            child: Container(
+              margin: widget.calendarMargin ?? EdgeInsets.zero,
+              child: Row(children: [
+                leftIconWidget(),
+                Expanded(child: Row(children: currentWeekRow)),
+                _rightIconWidget()
+              ]),
+            ),
           ))
     ]);
   }
