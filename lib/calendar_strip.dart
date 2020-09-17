@@ -26,6 +26,7 @@ class CalendarStrip extends StatefulWidget {
   final List<String> dayLabels;
   final EdgeInsets calendarMargin;
   final EdgeInsets dateTileMargin;
+  final DateTime currentDate;
 
   CalendarStrip({
     this.addSwipeGesture = false,
@@ -33,6 +34,7 @@ class CalendarStrip extends StatefulWidget {
     @required this.onDateSelected,
     this.dateTileBuilder,
     this.containerDecoration,
+    this.currentDate,
     this.containerHeight,
     this.monthNameWidget,
     this.iconColor,
@@ -51,12 +53,12 @@ class CalendarStrip extends StatefulWidget {
   });
 
   State<CalendarStrip> createState() =>
-      CalendarStripState(selectedDate, startDate, endDate);
+      CalendarStripState(selectedDate, startDate, endDate, currentDate);
 }
 
 class CalendarStripState extends State<CalendarStrip>
     with TickerProviderStateMixin {
-  DateTime currentDate = DateTime.now();
+  DateTime currentDate;
   DateTime selectedDate;
   String monthLabel;
   bool inBetweenMonths = false;
@@ -73,6 +75,7 @@ class CalendarStripState extends State<CalendarStrip>
 
   List<String> monthLabels;
   List<String> dayLabels;
+  Map<String, bool> dateRange;
 
   static const _dayLabels = ["Mon", "Tue", "Wed", "Thr", "Fri", "Sat", "Sun"];
 
@@ -91,8 +94,9 @@ class CalendarStripState extends State<CalendarStrip>
     "December"
   ];
 
-  CalendarStripState(
-      DateTime selectedDate, DateTime startDate, DateTime endDate) {
+  CalendarStripState(DateTime selectedDate, DateTime startDate,
+      DateTime endDate, DateTime currentDate) {
+    this.currentDate = currentDate ?? DateTime.now();
     today = getDateOnly(DateTime.now());
     lastDayOfMonth = DateUtils.getLastDayOfMonth(currentDate);
     runPresetsAndExceptions(selectedDate, startDate, endDate);
@@ -134,15 +138,26 @@ class CalendarStripState extends State<CalendarStrip>
             isDateAfter(widget.selectedDate, widget.endDate))) {
       throw Exception("Selected Date is out of range from start and end dates");
     } else {
-      setState(() {
-        selectedDate = getDateOnly(widget.selectedDate);
-      });
+      if (widget.currentDate.month != oldWidget.selectedDate.month) {
+        setState(() {
+          this.currentDate = widget.currentDate ?? DateTime.now();
+          this.selectedDate = this.currentDate;
+          int subtractDuration = widget.weekStartsOnSunday == true
+              ? currentDate.weekday
+              : currentDate.weekday - 1;
+          rowStartingDate = this.selectedDate;
+        });
+      } else
+        setState(() {
+          this.selectedDate = getDateOnly(widget.selectedDate);
+        });
     }
   }
 
   @override
   void initState() {
     super.initState();
+    currentDate = widget.currentDate ?? DateTime.now();
     monthLabels = widget.monthNames ?? _monthLabels;
     dayLabels = widget.dayLabels ?? _dayLabels;
     int subtractDuration = widget.weekStartsOnSunday == true
@@ -151,7 +166,7 @@ class CalendarStripState extends State<CalendarStrip>
     rowStartingDate = rowStartingDate != null
         ? rowStartingDate
         : currentDate.subtract(Duration(days: subtractDuration));
-    var dateRange = calculateDateRange(null);
+    this.dateRange = calculateDateRange(null);
 
     setState(() {
       isOnEndingWeek = dateRange['isEndingWeekOnRange'];
@@ -241,33 +256,33 @@ class CalendarStripState extends State<CalendarStrip>
   }
 
   onPrevRow() {
-    var dateRange = calculateDateRange("PREV");
+    this.dateRange = calculateDateRange("PREV");
     setState(() {
       rowStartingDate = rowStartingDate.subtract(Duration(days: 7));
-      isOnEndingWeek = dateRange['isEndingWeekOnRange'];
-      isOnStartingWeek = dateRange['isStartingWeekOnRange'];
+      // isOnEndingWeek = dateRange['isEndingWeekOnRange'];
+      // isOnStartingWeek = dateRange['isStartingWeekOnRange'];
     });
   }
 
   onNextRow() {
-    var dateRange = calculateDateRange("NEXT");
+    this.dateRange = calculateDateRange("NEXT");
     setState(() {
       rowStartingDate = rowStartingDate.add(Duration(days: 7));
-      isOnEndingWeek = dateRange['isEndingWeekOnRange'];
-      isOnStartingWeek = dateRange['isStartingWeekOnRange'];
+      // isOnEndingWeek = dateRange['isEndingWeekOnRange'];
+      // isOnStartingWeek = dateRange['isStartingWeekOnRange'];
     });
   }
 
   onDateTap(date) {
     if (!doesDateRangeExists) {
       setState(() {
-        selectedDate = date;
+        this.selectedDate = date;
         widget.onDateSelected(date);
       });
     } else if (!isDateBefore(date, widget.startDate) &&
         !isDateAfter(date, widget.endDate)) {
       setState(() {
-        selectedDate = date;
+        this.selectedDate = date;
         widget.onDateSelected(date);
       });
     } else {}
@@ -358,7 +373,9 @@ class CalendarStripState extends State<CalendarStrip>
     for (var eachDay = 0; eachDay < 7; eachDay++) {
       var index = eachDay;
       currentWeekRow.add(dateTileBuilder(
-          rowStartingDate.add(Duration(days: eachDay)), selectedDate, index));
+          rowStartingDate.add(Duration(days: eachDay)),
+          this.selectedDate,
+          index));
     }
     monthLabel = getMonthLabel();
     return Column(children: [
@@ -404,7 +421,8 @@ class CalendarStripState extends State<CalendarStrip>
       );
     }
 
-    bool isSelectedDate = date.compareTo(selectedDate) == 0;
+    bool isSelectedDate = date.compareTo(this.selectedDate) == 0;
+
     var normalStyle = TextStyle(
         fontSize: 17,
         fontWeight: FontWeight.w800,
@@ -443,6 +461,8 @@ class CalendarStripState extends State<CalendarStrip>
   }
 
   build(BuildContext context) {
+    isOnEndingWeek = dateRange['isEndingWeekOnRange'];
+    isOnStartingWeek = dateRange['isStartingWeekOnRange'];
     return Container(
       height: nullOrDefault(widget.containerHeight, 90.0),
       child: buildDateRow(),
