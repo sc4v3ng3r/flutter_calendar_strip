@@ -140,12 +140,17 @@ class CalendarStripState extends State<CalendarStrip>
     } else {
       if (widget.currentDate.month != oldWidget.selectedDate.month) {
         setState(() {
+          bool isNext = widget.currentDate.month > oldWidget.selectedDate.month;
           this.currentDate = widget.currentDate ?? DateTime.now();
           this.selectedDate = this.currentDate;
-          int subtractDuration = widget.weekStartsOnSunday == true
-              ? currentDate.weekday
-              : currentDate.weekday - 1;
-          rowStartingDate = this.selectedDate;
+
+          rowStartingDate = this.currentDate.month == widget.startDate.month
+              ? DateTime(this.currentDate.year, this.currentDate.month,
+                  widget.startDate.day)
+              : DateTime(this.currentDate.year, this.currentDate.month, 1);
+
+          this.dateRange = calculateDateRange(isNext ? "NEXT" : "PREV");
+          print("stop");
         });
       } else
         setState(() {
